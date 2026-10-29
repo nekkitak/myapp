@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Калории</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
 :root{--gl-bg:linear-gradient(135deg,rgba(255,255,255,.78),rgba(255,255,255,.34) 55%,rgba(255,255,255,.6));--gl-bd:rgba(255,255,255,.95);--gl-in:rgba(0,0,0,.06);--gl-sh:0 10px 30px rgba(60,60,90,.22);--bg:#f2f2f7;--surface:#fff;--text:#1d1d1f;--sub:#86868b;--line:rgba(60,60,67,.14);--track:rgba(120,120,128,.16);--seg:#fff;--glass:rgba(255,255,255,.72);--k:#ff2d55;--p:#30d158;--f:#ffd60a;--c:#0a84ff;--warn:#ff9f0a;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--gl-bg:linear-gradient(135deg,rgba(255,255,255,.26),rgba(255,255,255,.06) 55%,rgba(255,255,255,.16));--gl-bd:rgba(255,255,255,.3);--gl-in:rgba(255,255,255,.1);--gl-sh:0 10px 30px rgba(0,0,0,.5);--bg:#000;--surface:#1c1c1e;--text:#f5f5f7;--sub:#98989d;--line:rgba(84,84,88,.55);--track:rgba(120,120,128,.32);--seg:#636366;--glass:rgba(44,44,46,.72);color-scheme:dark}}
@@ -11,15 +14,19 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--text);font:17px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body{margin:0;background:radial-gradient(70% 34% at 12% 100%,var(--glow1),transparent 70%),radial-gradient(70% 34% at 88% 100%,var(--glow2),transparent 70%),var(--bg);color:var(--text);font:17px/1.35 var(--ui);font-optical-sizing:auto;-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+button,input,textarea{font-family:inherit}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--c);outline-offset:2px}
-main{max-width:460px;margin:0 auto;padding:14px 20px 140px}
+html,body{height:100%;overflow:hidden}
+body{display:flex;flex-direction:column}
+#scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;-webkit-mask-image:linear-gradient(#000 calc(100% - 22px),transparent);mask-image:linear-gradient(#000 calc(100% - 22px),transparent)}
+main{max-width:460px;margin:0 auto;padding:14px 20px 34px}
 .top{display:flex;justify-content:space-between;align-items:flex-end}
 .date{font-size:15px;font-weight:600;color:var(--sub)}
 h1{margin:2px 0 0;font-size:40px;line-height:1.05;font-weight:800;letter-spacing:-.035em;text-transform:capitalize}
 .nav{display:flex;gap:6px}
-.nav button{width:34px;height:34px;border-radius:50%;background:var(--surface);font-size:20px;line-height:1}
+.nav button{width:34px;height:34px;border-radius:50%;font-size:20px;line-height:1}
 .week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:22px 0 14px}
 .wd{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--sub);font-weight:500}
 .dc{position:relative;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:600;color:var(--text);background:conic-gradient(var(--k) var(--pc,0%),var(--track) 0)}
@@ -57,19 +64,40 @@ h1{margin:2px 0 0;font-size:40px;line-height:1.05;font-weight:800;letter-spacing
 .kc{font-weight:600;font-variant-numeric:tabular-nums}
 .del{width:32px;height:32px;border-radius:50%;color:var(--sub);font-size:20px}
 .empty{text-align:center;color:var(--sub);padding:26px 24px;margin-top:22px;background:var(--surface);border-radius:20px}
-#dock{position:fixed;left:0;right:0;bottom:calc(22px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;gap:12px;pointer-events:none;z-index:3}
-#dock>*{pointer-events:auto}
-#fab,#thm{position:relative;height:58px;border-radius:29px;background:var(--gl-bg);-webkit-backdrop-filter:blur(18px) saturate(200%);backdrop-filter:blur(18px) saturate(200%);border:1px solid var(--gl-bd);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 1px var(--gl-in),inset 0 0 14px var(--gl-in),var(--gl-sh);overflow:hidden;transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
-#fab::before,#thm::before{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(130% 90% at 18% -10%,rgba(255,255,255,.5),transparent 55%);pointer-events:none}
-#fab:active,#thm:active{transform:scale(.94)}
-#fab{padding:0 26px;font-weight:600;white-space:nowrap}
+:root{--ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","SF Pro",Inter,system-ui,"Helvetica Neue",Arial,sans-serif;--lens:blur(0px);--gl-tint:rgba(255,255,255,.3);--tip:rgba(255,255,255,.72);--gl-r1:rgba(255,255,255,.95);--gl-r2:rgba(255,255,255,.6);--gl-glow:rgba(255,255,255,.35);--gl-shd:0 8px 28px rgba(60,60,100,.22);--glow1:rgba(10,132,255,.16);--glow2:rgba(255,45,85,.14);--sheet:rgba(255,255,255,.86)}
+:root[data-theme="dark"]{--gl-tint:rgba(70,70,76,.34);--tip:rgba(36,36,40,.66);--gl-r1:rgba(255,255,255,.62);--gl-r2:rgba(255,255,255,.2);--gl-glow:rgba(255,255,255,.07);--gl-shd:0 10px 30px rgba(0,0,0,.55);--glow1:rgba(10,132,255,.3);--glow2:rgba(255,45,85,.28);--sheet:rgba(28,28,30,.84)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--gl-tint:rgba(70,70,76,.34);--tip:rgba(36,36,40,.66);--gl-r1:rgba(255,255,255,.62);--gl-r2:rgba(255,255,255,.2);--gl-glow:rgba(255,255,255,.07);--gl-shd:0 10px 30px rgba(0,0,0,.55);--glow1:rgba(10,132,255,.3);--glow2:rgba(255,45,85,.28);--sheet:rgba(28,28,30,.84)}}
+.glass{position:relative;isolation:isolate;overflow:hidden;background:var(--gl-tint);-webkit-backdrop-filter:blur(8px) saturate(190%) brightness(1.1);backdrop-filter:blur(8px) saturate(190%) brightness(1.1);box-shadow:inset 1.5px 1.5px 1px -.5px var(--gl-r1),inset -1.5px -1.5px 1px -.5px var(--gl-r2),inset 0 0 20px var(--gl-glow),var(--gl-shd);transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+html.lens .glass{-webkit-backdrop-filter:var(--lens) blur(2px) saturate(190%) brightness(1.1);backdrop-filter:var(--lens) blur(2px) saturate(190%) brightness(1.1)}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;background:radial-gradient(120% 100% at var(--mx,25%) var(--my,-10%),rgba(255,255,255,.42),transparent 55%)}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;pointer-events:none;opacity:.8;background:conic-gradient(from 200deg,rgba(255,255,255,.95),rgba(255,255,255,.08) 22%,rgba(255,255,255,.6) 50%,rgba(255,255,255,.08) 72%,rgba(255,255,255,.95));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
+.glass:active{transform:scale(.93)}
+#dock{flex:none;display:flex;justify-content:center;gap:12px;padding:10px 20px 14px}
+#fab{display:inline-flex;align-items:center;justify-content:center;gap:9px;height:58px;padding:0 26px;border-radius:29px;font-weight:600;font-size:17px;line-height:1;white-space:nowrap}
+#fab .pl{width:22px;height:22px;flex:none;fill:none;stroke:var(--k);stroke-width:2.8;stroke-linecap:round}
+#fab span{display:block;line-height:1;padding-bottom:1px}
 #fab i{font-style:normal;color:var(--k);font-size:24px;margin-right:8px;vertical-align:-2px}
-#thm{width:58px;flex:none}
-#thm svg{position:absolute;inset:0;margin:auto;width:25px;height:25px;fill:none;stroke:var(--text);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .55s cubic-bezier(.3,1.4,.5,1),opacity .3s}
+#thm{display:grid;place-items:center;padding:0;width:58px;height:58px;border-radius:50%;flex:none}
+#thm svg{grid-area:1/1;width:26px;height:26px;fill:none;stroke:var(--text);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .55s cubic-bezier(.3,1.4,.5,1),opacity .3s}
+.i-moon{translate:.7px -.7px}
 :root[data-theme="dark"] .i-moon{opacity:0;transform:rotate(-90deg) scale(.3)}
 :root[data-theme="light"] .i-sun{opacity:0;transform:rotate(90deg) scale(.3)}
+.nav button.glass{width:38px;height:38px;display:grid;place-items:center;padding:0}
+.nav svg{width:20px;height:20px;fill:none;stroke:var(--text);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+#tip{position:fixed;z-index:8;width:max-content;max-width:272px;padding:13px 15px;border-radius:22px;background:var(--tip);font-size:14px;line-height:1.4;pointer-events:none;opacity:0;transform:translateY(6px) scale(.96);transition:opacity .18s,transform .3s cubic-bezier(.3,1.4,.5,1)}
+#tip.on{opacity:1;transform:none}
+#tip b{display:block;font-size:16px;margin-bottom:3px}
+#tip .row2{display:flex;justify-content:space-between;gap:18px;font-variant-numeric:tabular-nums}
+#tip .mut{color:var(--sub)}
+.lgi{display:flex;gap:10px;align-items:center;text-align:left;border-radius:14px;padding:6px;margin:-6px;transition:background .2s}
+.lgi:hover,.lgi:focus-visible{background:var(--track)}
+.sheet .box,.sheet .hero{background:var(--bg)}
+.warn{margin:0 0 12px;padding:12px 14px;border-radius:14px;background:rgba(255,159,10,.15);border:1px solid rgba(255,159,10,.4);color:var(--warn);font-size:14px;line-height:1.4}
+.stk{position:sticky;top:4px;z-index:3;display:flex;justify-content:space-between;align-items:center;margin:0 0 12px;padding:10px 16px;border-radius:16px;background:var(--bg);border:1px solid var(--line);box-shadow:0 8px 20px rgba(0,0,0,.28)}
+.stk span{color:var(--sub);font-size:15px}
+.stk b{font-size:20px;font-variant-numeric:tabular-nums;color:var(--k)}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;z-index:5}
-.sheet{width:100%;max-width:460px;background:var(--surface);border-radius:32px 32px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom,0px));max-height:94%;overflow:auto;animation:up .3s cubic-bezier(.3,.8,.3,1)}
+.sheet{width:100%;max-width:460px;background:var(--sheet);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);border-top:1px solid var(--gl-r2);border-radius:32px 32px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom,0px));max-height:94%;overflow:auto;animation:up .3s cubic-bezier(.3,.8,.3,1)}
 .sheet::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:var(--track);margin:0 auto 14px}
 @keyframes up{from{transform:translateY(60px);opacity:0}}
 .shh{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
@@ -119,10 +147,9 @@ input::placeholder,textarea::placeholder{color:var(--sub)}
 </style>
 </head>
 <body>
-<main>
+<div id="scroll"><main>
   <div class="top"><div><div class="date" id="dateLbl"></div><h1 id="title"></h1></div>
-    <div class="nav"><button id="prev" aria-label="Предыдущая неделя">‹</button><button id="next" aria-label="Следующая неделя">›</button></div></div>
-  <div class="seg tabs" id="tabs"></div>
+    <div class="nav"><button id="prev" class="glass" aria-label="Предыдущая неделя"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.25 5.5 8.75 12l6.5 6.5"/></svg></button><button id="next" class="glass" aria-label="Следующая неделя"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.75 5.5 15.25 12l-6.5 6.5"/></svg></button></div></div>
   <div id="diary">
   <div class="week" id="week"></div>
   <section class="hero" id="hero">
@@ -134,33 +161,11 @@ input::placeholder,textarea::placeholder{color:var(--sub)}
   </section>
   <section id="list"></section>
   </div>
-  <section id="norm" hidden>
-    <div class="box">
-      <div class="nrow"><span>Пол</span><div class="seg" id="nSex"></div></div>
-      <div class="nrow"><label for="nAge">Возраст</label><input id="nAge" inputmode="numeric" placeholder="лет" autocomplete="off"></div>
-      <div class="nrow"><label for="nH">Рост</label><input id="nH" inputmode="numeric" placeholder="см" autocomplete="off"></div>
-      <div class="nrow"><label for="nW">Вес</label><input id="nW" inputmode="decimal" placeholder="кг" autocomplete="off"></div>
-    </div>
-    <div class="gh"><span>Активность</span></div>
-    <div class="box" id="nAct"></div>
-    <div class="gh"><span>Цель</span></div>
-    <div class="seg" id="nGoal"></div>
-    <div class="seg" id="nPace"></div>
-    <p class="err" id="nErr" role="alert"></p>
-    <button class="primary" id="nCalc">Рассчитать норму</button>
-    <div class="hero nrm" id="nRes" hidden>
-      <div class="lbl">Ваша норма</div>
-      <div><span class="big" id="rK">0</span><span class="u"> ккал в день</span></div>
-      <div class="sub" id="rNote"></div>
-      <div class="lg" id="rLg" style="margin-top:20px"></div>
-      <div class="mini"><span>Основной обмен <b id="rB"></b></span><span>Поддержание <b id="rT"></b></span></div>
-      <button class="primary" id="nApply" style="margin-top:18px">Сделать целью на день</button>
-    </div>
-  </section>
-</main>
+  
+</main></div>
 <div id="dock">
-  <button id="fab"><i>+</i>Добавить еду</button>
-  <button id="thm" aria-label="Сменить тему: светлая или тёмная">
+  <button id="fab" class="glass"><svg class="pl" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Добавить еду</span></button>
+  <button id="thm" class="glass" aria-label="Сменить тему: светлая или тёмная">
     <svg class="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
     <svg class="i-moon" viewBox="0 0 24 24"><path d="M20.5 13.6A8.5 8.5 0 1 1 10.4 3.5a6.8 6.8 0 0 0 10.1 10.1z"/></svg>
   </button>
@@ -193,13 +198,38 @@ input::placeholder,textarea::placeholder{color:var(--sub)}
     </div>
   </div>
   <div class="sheet" id="goalSheet" role="dialog" aria-modal="true" aria-labelledby="t2" hidden>
-    <div class="shh"><h2 id="t2">Настройки</h2><button class="link" data-close>Отмена</button></div>
-    <label class="fl" for="gi">Цель на день, ккал</label>
+    <div class="shh"><h2 id="t2">Цель на день</h2><button class="link" data-close>Отмена</button></div>
+    <label class="fl" for="gi">Калории в день, ккал</label>
     <input id="gi" inputmode="numeric">
-    <span class="fl">Оформление</span>
-    <div class="seg" id="theme"></div>
     <p class="err" id="gerr" role="alert"></p>
-    <button class="primary" id="goalSave">Сохранить</button>
+    <button class="primary" id="goalSave">Сохранить цель</button>
+    <div class="gh" style="margin:30px 6px 12px"><span>Рассчитать норму по параметрам</span></div>
+    <div id="norm">
+      <div class="stk" id="nStk" hidden><span>Норма сейчас</span><b id="nStkK">0</b></div>
+    <div class="box">
+      <div class="nrow"><span>Пол</span><div class="seg" id="nSex"></div></div>
+      <div class="nrow"><label for="nAge">Возраст</label><input id="nAge" inputmode="numeric" placeholder="лет" autocomplete="off"></div>
+      <div class="nrow"><label for="nH">Рост</label><input id="nH" inputmode="numeric" placeholder="см" autocomplete="off"></div>
+      <div class="nrow"><label for="nW">Вес</label><input id="nW" inputmode="decimal" placeholder="кг" autocomplete="off"></div>
+    </div>
+    <div class="gh"><span>Активность</span></div>
+    <div class="box" id="nAct"></div>
+    <div class="gh"><span>Цель</span></div>
+    <div class="seg" id="nGoal"></div>
+    <div class="seg" id="nPace"></div>
+    <p class="warn" id="nWarn" role="status" hidden></p>
+    <p class="err" id="nErr" role="alert"></p>
+    <button class="primary" id="nCalc">Рассчитать норму</button>
+    <div class="hero nrm" id="nRes" hidden>
+      <div class="lbl">Ваша норма</div>
+      <div><span class="big" id="rK">0</span><span class="u"> ккал в день</span></div>
+      <div class="sub" id="rNote"></div>
+      <div class="lg" id="rLg" style="margin-top:20px"></div>
+      <div class="mini"><span>Основной обмен <b id="rB"></b></span><span>Поддержание <b id="rT"></b></span></div>
+      <button class="primary" id="nApply" style="margin-top:18px">Сделать целью на день</button>
+    </div>
+  </div>
+    <p class="sub" style="text-align:center;margin:22px 0 0;font-size:12px">Версия 11</p>
   </div>
 </div>
 
@@ -246,10 +276,11 @@ function render() {
   $('#goal').textContent = fmt(g);
   const mg = st.mac || {p: g*.25/4, f: g*.3/9, c: g*.45/4};
   const M = [['p','Белки',mg.p],['f','Жиры',mg.f],['c','Углеводы',mg.c]];
+  snap = {k:[eaten,g],p:[sum('p'),mg.p],f:[sum('f'),mg.f],c:[sum('c'),mg.c]};
   setRing('k', 112, eaten / g, eaten > 0);
   M.forEach(([id, , goal], i) => setRing(id, RINGS[i + 1][1], sum(id) / goal, sum(id) > 0));
   $('#lg').innerHTML = [['k','Калории, ккал',eaten,g,'']].concat(M.map(([id, n, goal]) => [id, n, sum(id), Math.round(goal), 'г']))
-    .map(([id, n, v, goal, u]) => `<div><i style="background:var(--${id})"></i><div><b>${n}</b><span>${fmt(v)} из ${fmt(goal)} ${u}</span></div></div>`).join('');
+    .map(([id, n, v, goal, u]) => `<button class="lgi" data-t="${id}"><i style="background:var(--${id})"></i><div><b>${n}</b><span>${fmt(v)} из ${fmt(goal)} ${u}</span></div></button>`).join('');
   weekStart = new Date(day); weekStart.setDate(day.getDate() - (day.getDay() + 6) % 7);
   $('#week').innerHTML = WD.map((w, i) => {
     const dt = new Date(weekStart); dt.setDate(weekStart.getDate() + i);
@@ -280,10 +311,6 @@ function setMode(m) {
   $('#srPane').hidden = m !== 'sr';
   $('#manPane').hidden = m !== 'man';
   $('#mode').innerHTML = [['sr','Поиск'],['man','Вручную']].map(([v, t]) => `<button class="${v === m ? 'on' : ''}" data-mode="${v}">${t}</button>`).join('');
-}
-function drawTheme() {
-  const cur = document.documentElement.dataset.theme;
-  $('#theme').innerHTML = [['dark','Тёмное'],['light','Светлое']].map(([v, t]) => `<button class="${v === cur ? 'on' : ''}" data-th="${v}">${t}</button>`).join('');
 }
 const RAW = `Гречка варёная|110|4.2|1.1|21.3
 Гречка сухая|313|12.6|3.3|62.1
@@ -564,7 +591,7 @@ const RAW = `Гречка варёная|110|4.2|1.1|21.3
 const norm = x => x.toLowerCase().replace(/ё/g, 'е');
 const FOODS = RAW.split('\n').map(l => { const a = l.split('|'); return {n: a[0], k: +a[1], p: +a[2], f: +a[3], c: +a[4], w: +a[5] || 0, s: norm(a[0])}; });
 const POP = ['Гречка варёная','Куриная грудка варёная','Яйцо куриное','Банан','Творог 5%','Рис белый варёный','Овсяная каша на воде','Яблоко'];
-let sel = null, cur = null;
+let sel = null, cur = null, snap = null;
 $('#chips').innerHTML = QUICK.map((q, i) => `<button data-q="${i}">${q[0]}</button>`).join('');
 $('#chips').onclick = e => {
   const b = e.target.closest('[data-q]'); if (!b) return;
@@ -573,14 +600,6 @@ $('#chips').onclick = e => {
 };
 $('#seg').onclick = e => { const b = e.target.closest('[data-m]'); if (b) { meal = b.dataset.m; drawSeg(); } };
 $('#mode').onclick = e => { const b = e.target.closest('[data-mode]'); if (b) setMode(b.dataset.mode); };
-$('#thm').onclick = () => {
-  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-  document.documentElement.dataset.theme = st.theme = t; save();
-};
-$('#theme').onclick = e => {
-  const b = e.target.closest('[data-th]'); if (!b) return;
-  document.documentElement.dataset.theme = st.theme = b.dataset.th; save(); drawTheme();
-};
 function showFound() {
   const t = norm($('#q').value).split(/\s+/).filter(Boolean);
   let r;
@@ -645,7 +664,7 @@ $('#week').onclick = e => {
   const b = e.target.closest('[data-i]'); if (!b) return;
   day = new Date(weekStart); day.setDate(weekStart.getDate() + +b.dataset.i); render();
 };
-$('#goalBtn').onclick = () => { $('#gi').value = st.goal; $('#gerr').textContent = ''; drawTheme(); open('goalSheet'); $('#gi').focus(); };
+$('#goalBtn').onclick = () => { $('#gi').value = st.goal; $('#gerr').textContent = ''; drawNorm(); $('#nAge').value = pf.age; $('#nH').value = pf.h; $('#nW').value = pf.w; $('#nRes').hidden = true; $('#nStk').hidden = true; $('#nWarn').hidden = true; open('goalSheet'); };
 $('#goalSave').onclick = () => {
   const v = num($('#gi').value);
   if (v < 800 || v > 6000) { $('#gerr').textContent = 'Укажите цель от 800 до 6000 ккал.'; return; }
@@ -669,29 +688,22 @@ function drawNorm() {
   $('#nPace').hidden = pf.goal === 'keep';
   if (pf.goal !== 'keep') $('#nPace').innerHTML = segHtml(PACE[pf.goal].map(([t, x], i) => [i, t + ' (' + (x > 0 ? '+' : '−') + Math.round(Math.abs(x) * 100) + '%)']), pf.pace, 'data-pc');
 }
-function view(v) {
-  const n = v === 'n';
-  $('#diary').hidden = n; $('#norm').hidden = !n; $('#fab').hidden = n; document.querySelector('.nav').hidden = n;
-  $('#tabs').innerHTML = segHtml([['d','Дневник'],['n','Норма']], v, 'data-v');
-  if (n) { $('#title').textContent = 'Моя норма'; $('#dateLbl').textContent = 'Расчёт калорий'; drawNorm(); $('#nAge').value = pf.age; $('#nH').value = pf.h; $('#nW').value = pf.w; } else render();
-}
-$('#tabs').onclick = e => { const b = e.target.closest('[data-v]'); if (b) view(b.dataset.v); };
-$('#nSex').onclick = e => { const b = e.target.closest('[data-sx]'); if (b) { pf.sex = b.dataset.sx; drawNorm(); } };
-$('#nAct').onclick = e => { const b = e.target.closest('[data-a]'); if (b) { pf.act = +b.dataset.a; drawNorm(); } };
-$('#nGoal').onclick = e => { const b = e.target.closest('[data-go]'); if (b) { pf.goal = b.dataset.go; drawNorm(); } };
-$('#nPace').onclick = e => { const b = e.target.closest('[data-pc]'); if (b) { pf.pace = +b.dataset.pc; drawNorm(); } };
-$('#nCalc').onclick = () => {
+$('#nSex').onclick = e => { const b = e.target.closest('[data-sx]'); if (b) { pf.sex = b.dataset.sx; drawNorm(); refresh(); } };
+$('#nAct').onclick = e => { const b = e.target.closest('[data-a]'); if (b) { pf.act = +b.dataset.a; drawNorm(); refresh(); } };
+$('#nGoal').onclick = e => { const b = e.target.closest('[data-go]'); if (b) { pf.goal = b.dataset.go; drawNorm(); refresh(); } };
+$('#nPace').onclick = e => { const b = e.target.closest('[data-pc]'); if (b) { pf.pace = +b.dataset.pc; drawNorm(); refresh(); } };
+function runCalc(user) {
   const age = num($('#nAge').value), h = num($('#nH').value), w = Math.round((parseFloat($('#nW').value.replace(',', '.')) || 0) * 10) / 10;
-  if (age < 14 || age > 90 || h < 120 || h > 230 || w < 30 || w > 250) { $('#nErr').textContent = 'Проверьте данные: возраст 14–90 лет, рост 120–230 см, вес 30–250 кг.'; return; }
+  if (age < 14 || age > 90 || h < 120 || h > 230 || w < 30 || w > 250) { if (user) $('#nErr').textContent = 'Проверьте данные: возраст 14–90 лет, рост 120–230 см, вес 30–250 кг.'; return false; }
   $('#nErr').textContent = '';
   Object.assign(pf, {age, h, w});
   const male = pf.sex === 'm', bmr = 10 * w + 6.25 * h - 5 * age + (male ? 5 : -161), tdee = bmr * pf.act, bmi = w / ((h / 100) ** 2);
-  let goal = pf.goal, notes = [];
-  if (goal === 'lose' && bmi < 18.5) { goal = 'keep'; notes.push('При вашем индексе массы тела снижать вес не рекомендуется, поэтому показана норма для поддержания.'); }
-  else if (goal === 'lose' && age < 18) { goal = 'keep'; notes.push('До 18 лет снижать калорийность без врача не стоит, поэтому показана норма для поддержания.'); }
+  let goal = pf.goal, notes = [], warn = '';
+  if (goal === 'lose' && bmi < 18.5) { goal = 'keep'; warn = 'Снижение веса недоступно: ваш индекс массы тела ' + bmi.toFixed(1).replace('.', ',') + ' (ниже 18,5, это дефицит массы). Показана норма для поддержания. Если хотите изменить вес, обсудите это с врачом.'; }
+  else if (goal === 'lose' && age < 18) { goal = 'keep'; warn = 'Снижение веса недоступно: вам меньше 18 лет, а организм ещё растёт. Показана норма для поддержания. Менять вес в этом возрасте стоит только вместе с врачом.'; }
   let target = goal === 'keep' ? tdee : tdee * (1 + PACE[goal][pf.pace][1]);
   const floor = male ? 1500 : 1200;
-  if (goal === 'lose' && target < floor) { target = floor; notes.push('Ниже ' + floor + ' ккал опускаться небезопасно, поэтому показана нижняя граница.'); }
+  if (goal === 'lose' && target < floor) { target = floor; warn = 'Ниже ' + floor + ' ккал опускаться небезопасно, поэтому показана нижняя граница.'; }
   target = Math.round(target / 10) * 10;
   const kg = (target - tdee) * 7 / 7700;
   if (Math.abs(kg) >= 0.05) notes.push('Ожидаемое изменение веса: около ' + (kg > 0 ? '+' : '−') + Math.abs(kg).toFixed(1).replace('.', ',') + ' кг в неделю.');
@@ -701,16 +713,89 @@ $('#nCalc').onclick = () => {
   calcRes = {target, P, F, C: Cc};
   st.prof = pf; save();
   $('#rK').textContent = fmt(target);
+  $('#nWarn').textContent = warn; $('#nWarn').hidden = !warn;
+  $('#nStk').querySelector('span').textContent = warn ? 'Норма сейчас (поддержание)' : 'Норма сейчас';
+  $('#nStkK').textContent = fmt(target) + ' ккал'; $('#nStk').hidden = false;
   $('#rNote').textContent = notes.join(' ');
   $('#rLg').innerHTML = [['p','Белки',P],['f','Жиры',F],['c','Углеводы',Cc]].map(([id, n, v]) => `<div><i style="background:var(--${id})"></i><div><b>${n}</b><span>${v} г в день</span></div></div>`).join('');
   $('#rB').textContent = fmt(Math.round(bmr)); $('#rT').textContent = fmt(Math.round(tdee));
-  $('#nRes').hidden = false; $('#nRes').scrollIntoView({behavior: 'smooth', block: 'start'});
-};
+  const first = $('#nRes').hidden;
+  $('#nRes').hidden = false;
+  if (user && first) $('#nRes').scrollIntoView({behavior: 'smooth', block: 'start'});
+  return true;
+}
+// once a result is on screen it follows every change, so it can never go stale
+function refresh() { if (!$('#nRes').hidden && !runCalc(false)) { $('#nRes').hidden = true; $('#nStk').hidden = true; $('#nWarn').hidden = true; } }
+$('#nCalc').onclick = () => runCalc(true);
+['nAge', 'nH', 'nW'].forEach(id => $('#' + id).addEventListener('input', refresh));
 $('#nApply').onclick = () => {
   if (!calcRes) return;
-  st.goal = calcRes.target; st.mac = {p: calcRes.P, f: calcRes.F, c: calcRes.C}; save(); view('d');
+  st.goal = calcRes.target; st.mac = {p: calcRes.P, f: calcRes.F, c: calcRes.C}; save(); close(); render();
 };
-view('d');
+
+// ----- liquid glass: real refraction (Chromium) + pointer-tracked highlight
+const LENS = !!(navigator.userAgentData && navigator.userAgentData.brands.some(b => /Chromium/.test(b.brand)));
+if (LENS) document.documentElement.classList.add('lens');
+const NS = 'http://www.w3.org/2000/svg';
+let defs = null, lid = 0;
+function lens(el) {
+  if (!LENS) return;
+  const w = Math.round(el.offsetWidth), h = Math.round(el.offsetHeight);
+  if (!w || !h) return;
+  if (!defs) { const sv = document.createElementNS(NS, 'svg'); sv.setAttribute('width', '0'); sv.setAttribute('height', '0'); sv.setAttribute('aria-hidden', 'true'); sv.style.cssText = 'position:absolute;pointer-events:none'; defs = document.createElementNS(NS, 'defs'); sv.appendChild(defs); document.body.appendChild(sv); }
+  const id = el._lid || (el._lid = 'lens' + (++lid)), band = Math.min(20, Math.min(w, h) * .38), bx = band / w, by = band / h;
+  const map = hz => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="${NS}" width="${w}" height="${h}"><defs><linearGradient id="g" x1="0" y1="0" x2="${hz ? 1 : 0}" y2="${hz ? 0 : 1}"><stop offset="0" stop-color="${hz ? 'rgb(255,128,128)' : 'rgb(128,255,128)'}"/><stop offset="${hz ? bx : by}" stop-color="rgb(128,128,128)"/><stop offset="${1 - (hz ? bx : by)}" stop-color="rgb(128,128,128)"/><stop offset="1" stop-color="${hz ? 'rgb(0,128,128)' : 'rgb(128,0,128)'}"/></linearGradient></defs><rect width="${w}" height="${h}" fill="url(#g)"/></svg>`);
+  let f = document.getElementById(id);
+  if (!f) { f = document.createElementNS(NS, 'filter'); f.id = id; defs.appendChild(f); }
+  f.setAttribute('filterUnits', 'userSpaceOnUse'); f.setAttribute('x', 0); f.setAttribute('y', 0); f.setAttribute('width', w); f.setAttribute('height', h);
+  f.setAttribute('color-interpolation-filters', 'sRGB');
+  f.innerHTML = `<feImage href="${map(1)}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="mx"/><feImage href="${map(0)}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="my"/><feDisplacementMap in="SourceGraphic" in2="mx" scale="32" xChannelSelector="R" yChannelSelector="G" result="d1"/><feDisplacementMap in="d1" in2="my" scale="32" xChannelSelector="B" yChannelSelector="G"/>`;
+  el.style.setProperty('--lens', 'blur(0px)'); void el.offsetWidth; el.style.setProperty('--lens', `url(#${id})`);
+}
+// ----- tooltip for calories / protein / fat / carbs
+const TIPS = {
+  k: ['Калории', 'Энергия, которую тело получает из еды. Баланс калорий решает, худеете вы, держите вес или набираете.', 0],
+  p: ['Белки', 'Строительный материал для мышц, кожи и иммунитета. Дают 4 ккал на 1 г. Много в мясе, рыбе, яйцах и твороге.', 4],
+  f: ['Жиры', 'Нужны для гормонов, мозга и усвоения витаминов. Дают 9 ккал на 1 г. Источники: масла, орехи, жирная рыба, яйца.', 9],
+  c: ['Углеводы', 'Главный источник энергии для мозга и мышц. Дают 4 ккал на 1 г. Источники: крупы, фрукты, овощи, хлеб.', 4]
+};
+const tip = document.createElement('div');
+tip.id = 'tip'; tip.className = 'glass'; tip.setAttribute('role', 'tooltip');
+document.body.appendChild(tip);
+let tipFor = null;
+const canHover = () => matchMedia('(hover:hover)').matches;
+function showTip(btn) {
+  const id = btn.dataset.t, [name, text, kc] = TIPS[id], [v, g] = snap[id], u = id === 'k' ? 'ккал' : 'г', left = Math.round(g - v);
+  let rows = `<div class="row2"><span class="mut">Съедено</span><span>${fmt(v)} из ${fmt(Math.round(g))} ${u} (${Math.round(v / g * 100)}%)</span></div><div class="row2"><span class="mut">${left >= 0 ? 'Осталось' : 'Сверх нормы'}</span><span>${fmt(Math.abs(left))} ${u}</span></div>`;
+  if (kc && snap.k[0] > 0) rows += `<div class="row2"><span class="mut">Доля в калориях</span><span>${Math.round(v * kc / snap.k[0] * 100)}%</span></div>`;
+  tip.innerHTML = `<b>${name}</b>${text}<div style="margin-top:9px">${rows}</div>`;
+  tip.style.left = '0px'; tip.style.top = '0px';
+  const r = btn.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+  tip.style.left = Math.max(12, Math.min(r.left + r.width / 2 - tw / 2, innerWidth - tw - 12)) + 'px';
+  tip.style.top = (r.top - th - 12 < 12 ? r.bottom + 12 : r.top - th - 12) + 'px';
+  tip.classList.add('on'); tipFor = btn; lens(tip);
+}
+const hideTip = () => { tip.classList.remove('on'); tipFor = null; };
+const lgEl = $('#lg');
+lgEl.addEventListener('mouseover', e => { const b = e.target.closest('.lgi'); if (b && b !== tipFor && canHover()) showTip(b); });
+lgEl.addEventListener('mouseout', e => { const b = e.target.closest('.lgi'); if (b && !b.contains(e.relatedTarget)) hideTip(); });
+lgEl.addEventListener('focusin', e => { const b = e.target.closest('.lgi'); if (b && b.matches(':focus-visible')) showTip(b); });
+lgEl.addEventListener('focusout', hideTip);
+lgEl.addEventListener('click', e => { const b = e.target.closest('.lgi'); if (b) (tipFor === b && !canHover()) ? hideTip() : showTip(b); });
+document.addEventListener('click', e => { if (!e.target.closest('.lgi')) hideTip(); });
+$('#scroll').addEventListener('scroll', hideTip, {passive: true});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideTip(); });
+// ----- theme button + glass init
+$('#thm').onclick = () => {
+  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = st.theme = t; save();
+};
+document.querySelectorAll('.glass').forEach(el => { lens(el); if (window.ResizeObserver) new ResizeObserver(() => lens(el)).observe(el); });
+document.addEventListener('pointermove', e => {
+  const g = e.target.closest && e.target.closest('.glass'); if (!g) return;
+  const r = g.getBoundingClientRect();
+  g.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%'); g.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+});
 </script>
 </body>
 </html>
