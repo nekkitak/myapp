@@ -144,6 +144,19 @@ input::placeholder,textarea::placeholder{color:var(--sub)}
 .arow.on i{opacity:1}
 .nrm{margin-top:20px}
 .nrm .sub{margin:10px 0 0}
+
+.th{flex:none;width:40px;height:40px;border-radius:10px;background:var(--track);display:grid;place-items:center;font-size:22px;line-height:1;overflow:hidden}
+.th img{width:100%;height:100%;object-fit:cover;display:block}
+.th.lg{width:56px;height:56px;border-radius:14px;font-size:30px}
+.fd .fn{flex:1;min-width:0}
+.pk-h .pn{display:flex;gap:12px;align-items:center;min-width:0}
+.cam{position:relative;border-radius:20px;overflow:hidden;background:#000;aspect-ratio:4/3;margin-bottom:12px}
+.cam video{width:100%;height:100%;object-fit:cover;display:block}
+.cam .frame{position:absolute;left:10%;right:10%;top:28%;bottom:28%;border:2px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.3);pointer-events:none}
+.bc{display:flex;gap:8px;margin-top:8px}
+.bc input{flex:1;margin:0}
+.bc .primary{width:auto;padding:0 22px}
+#scanMsg{margin:0 4px 6px}
 </style>
 </head>
 <body>
@@ -180,13 +193,19 @@ input::placeholder,textarea::placeholder{color:var(--sub)}
       <input id="q" type="search" placeholder="Найти продукт: гречка, борщ, банан" autocomplete="off">
       <div class="found" id="found"></div>
       <div id="pick" hidden>
-        <div class="pk-h"><b id="pkName"></b><button class="link" id="pkBack">Назад</button></div>
+        <div class="pk-h"><span class="pn"><span id="pkTh"></span><b id="pkName"></b></span><button class="link" id="pkBack">Назад</button></div>
         <div class="sub" id="pkBase"></div>
         <div class="gram"><input id="gr" inputmode="decimal" aria-label="Граммы"><span class="sub">грамм</span></div>
         <div class="chips" id="gchips"></div>
         <div class="res2"><span class="big2" id="pkK">0</span><span class="u"> ккал</span><div class="sub" id="pkM"></div></div>
         <button class="primary" id="addSr">Добавить</button>
       </div>
+    </div>
+    <div id="scanPane" hidden>
+      <div class="cam"><video id="cam" playsinline muted></video><div class="frame"></div></div>
+      <p class="sub" id="scanMsg">Наведите камеру на штрих-код</p>
+      <button class="link" id="scanAgain" hidden style="padding:4px;margin:0 0 6px">Сканировать снова</button>
+      <div class="bc"><input id="bcIn" inputmode="numeric" placeholder="Или введите код цифрами" autocomplete="off"><button class="primary" id="bcGo">Найти</button></div>
     </div>
     <div id="manPane" hidden>
       <div class="chips" id="chips"></div>
@@ -229,7 +248,7 @@ input::placeholder,textarea::placeholder{color:var(--sub)}
       <button class="primary" id="nApply" style="margin-top:18px">Сделать целью на день</button>
     </div>
   </div>
-    <p class="sub" style="text-align:center;margin:22px 0 0;font-size:12px">Версия 13</p>
+    <p class="sub" style="text-align:center;margin:22px 0 0;font-size:12px">Версия 16</p>
   </div>
 </div>
 
@@ -292,7 +311,7 @@ function render() {
     const it = list.filter(e => e.meal === m);
     if (!it.length) return;
     h += `<div class="grp"><div class="gh"><span>${m}</span><span>${fmt(it.reduce((a, e) => a + e.kcal, 0))} ккал</span></div><div class="box">` +
-      it.map(e => `<div class="row"><div><div class="nm">${esc(e.name)}</div>${(e.p||e.f||e.c) ? `<div class="mc">белки ${e.p}, жиры ${e.f}, углеводы ${e.c} г</div>` : ''}</div><span class="kc">${e.kcal}</span><button class="del" data-id="${e.id}" aria-label="Удалить ${esc(e.name)}">×</button></div>`).join('') + '</div></div>';
+      it.map(e => `<div class="row">${thumb(e.img, e.name)}<div><div class="nm">${esc(e.name)}</div>${(e.p||e.f||e.c) ? `<div class="mc">белки ${e.p}, жиры ${e.f}, углеводы ${e.c} г</div>` : ''}</div><span class="kc">${e.kcal}</span><button class="del" data-id="${e.id}" aria-label="Удалить ${esc(e.name)}">×</button></div>`).join('') + '</div></div>';
   });
   $('#list').innerHTML = h || '<div class="empty">В этот день пока ничего нет. Нажмите «Добавить еду» и найдите продукт в базе.</div>';
 }
@@ -302,7 +321,7 @@ function open(id) {
   $('#addSheet').hidden = id !== 'addSheet';
   $('#goalSheet').hidden = id !== 'goalSheet';
 }
-const close = () => { $('#ov').hidden = true; };
+const close = () => { $('#ov').hidden = true; stopScan(); };
 function drawSeg() {
   $('#seg').innerHTML = MEALS.map(m => `<button class="${m === meal ? 'on' : ''}" data-m="${m}">${m}</button>`).join('');
 }
@@ -310,7 +329,9 @@ function setMode(m) {
   mode = m;
   $('#srPane').hidden = m !== 'sr';
   $('#manPane').hidden = m !== 'man';
-  $('#mode').innerHTML = [['sr','Поиск'],['man','Вручную']].map(([v, t]) => `<button class="${v === m ? 'on' : ''}" data-mode="${v}">${t}</button>`).join('');
+  $('#scanPane').hidden = m !== 'scan';
+  $('#mode').innerHTML = [['sr','Поиск'],['scan','Скан'],['man','Вручную']].map(([v, t]) => `<button class="${v === m ? 'on' : ''}" data-mode="${v}">${t}</button>`).join('');
+  if (m === 'scan') { $('#bcIn').value = ''; startScan(); } else stopScan();
 }
 const RAW = `Гречка варёная|110|4.2|1.1|21.3
 Гречка сухая|313|12.6|3.3|62.1
@@ -591,6 +612,13 @@ const RAW = `Гречка варёная|110|4.2|1.1|21.3
 const norm = x => x.toLowerCase().replace(/ё/g, 'е');
 const FOODS = RAW.split('\n').map(l => { const a = l.split('|'); return {n: a[0], k: +a[1], p: +a[2], f: +a[3], c: +a[4], w: +a[5] || 0, s: norm(a[0])}; });
 const POP = ['Гречка варёная','Куриная грудка варёная','Яйцо куриное','Банан','Творог 5%','Рис белый варёный','Овсяная каша на воде','Яблоко'];
+(st.saved = Array.isArray(st.saved) ? st.saved.filter(x => x && x.n && isFinite(x.k)) : []).forEach(x => FOODS.push(Object.assign({}, x, {my: 1, s: norm(x.n)})));
+function saveFood(x) {
+  const o = {n: x.n, k: x.k, p: x.p, f: x.f, c: x.c, w: 0, img: x.img || '', bc: x.bc || ''};
+  st.saved = (st.saved || []).filter(y => y.n !== o.n); st.saved.unshift(o); st.saved = st.saved.slice(0, 300);
+  const i = FOODS.findIndex(y => y.n === o.n && y.my); if (i >= 0) FOODS.splice(i, 1);
+  FOODS.push(Object.assign({my: 1, s: norm(o.n)}, o)); save();
+}
 let sel = null, cur = null, snap = null;
 $('#chips').innerHTML = QUICK.map((q, i) => `<button data-q="${i}">${q[0]}</button>`).join('');
 $('#chips').onclick = e => {
@@ -600,24 +628,289 @@ $('#chips').onclick = e => {
 };
 $('#seg').onclick = e => { const b = e.target.closest('[data-m]'); if (b) { meal = b.dataset.m; drawSeg(); } };
 $('#mode').onclick = e => { const b = e.target.closest('[data-mode]'); if (b) setMode(b.dataset.mode); };
+// ----- pictures: a real photo when we have one, otherwise an emoji chosen by the name
+const EMO = [
+  [/печенье|пряник/, '🍪'], [/сырник|оладь|блин|драник/, '🥞'], [/суши|ролл|нигири/, '🍣'], [/пицц/, '🍕'],
+  [/хот-дог|сосиск/, '🌭'], [/бургер/, '🍔'], [/шаурм|лаваш|тортилья/, '🌯'], [/сэндвич/, '🥪'],
+  [/пельмен|вареник|манты|хинкали/, '🥟'], [/попкорн/, '🍿'], [/чипсы|(^|\s)фри/, '🍟'],
+  [/шоколад|конфет|батончик|какао|snickers|mars|twix/, '🍫'], [/мороженое|пломбир/, '🍨'],
+  [/томат|помидор|кетчуп/, '🍅'], [/оливк/, '🫒'], [/лапша быстрого/, '🍜'],
+  [/борщ|(^|\s)щи(\s|$)|суп|солянк|(^|\s)уха(\s|$)|харчо|окрошк|рагу/, '🍲'],
+  [/салат|руккол|шпинат|винегрет|оливье|цезарь/, '🥗'],
+  [/арахис|фисташ|фундук|кешью|миндал|орех|семечк|семена|кунжут/, '🥜'],
+  [/(^|[^а-яё])рис([^а-яё]|$)|плов/, '🍚'], [/каш[аи]|хлопь|мюсли|гранол/, '🥣'],
+  [/^паста|лазань|макарон|спагетти|лапш/, '🍝'],
+  [/яичниц|омлет/, '🍳'], [/яйц|яичн|желток/, '🥚'],
+  [/сырн|(^|\s)сыр(?![а-яё])|брынз|моцарелл|пармезан|(^|\s)фета|плавлен/, '🧀'],
+  [/молок|кефир|ряженк|сливк|йогурт|творог|сметан/, '🥛'], [/масло/, '🧈'],
+  [/бекон/, '🥓'], [/кревет|краб|мидии|кальмар/, '🦐'],
+  [/лосос|форел|тунец|треск|минта|скумбри|сельдь|селёдк|шпрот|сардин|рыб|икра/, '🐟'],
+  [/курин|куриц|цыпл|наггетс|индейк|утка|утк/, '🍗'],
+  [/шашлык|стейк|говя|говяд|свин|баранин|ветчин|колбас|фарш|котлет|тефтел|бефстроган|голубц|тушёнк|тушенк|кролик|печень|язык|мясн/, '🥩'],
+  [/огурец|огурц/, '🥒'], [/морков/, '🥕'], [/брокколи|капуст|кабачок/, '🥦'], [/баклажан/, '🍆'], [/лук|чеснок/, '🧅'],
+  [/батат/, '🍠'], [/картоф|пюре/, '🥔'], [/тыкв/, '🎃'], [/кукуруз/, '🌽'], [/шампиньон|гриб/, '🍄'],
+  [/перец/, '🫑'], [/авокадо/, '🥑'], [/свёкл|свекл|сельдерей|редис|спарж|фасоль стручк/, '🥬'],
+  [/горох|горошек|фасол|нут|чечевиц|хумус|тофу/, '🌱'],
+  [/кофе|латте|капучино/, '☕'], [/пиво|квас/, '🍺'], [/вино(?!град)/, '🍷'], [/водка/, '🥃'], [/(^|\s)сок(?![а-яё])/, '🧃'], [/(^|\s)кола|энергетик/, '🥤'],
+  [/яблок/, '🍎'], [/банан/, '🍌'], [/апельсин|мандарин|хурм/, '🍊'], [/груш/, '🍐'], [/чернослив|виноград|изюм/, '🍇'],
+  [/персик|абрикос|курага|(^|\s)слива/, '🍑'], [/киви/, '🥝'], [/манго/, '🥭'], [/ананас/, '🍍'], [/арбуз/, '🍉'],
+  [/дын/, '🍈'], [/грейпфрут|лимон/, '🍋'], [/гранат/, '🍎'], [/клубник|малин/, '🍓'], [/черник|смородин/, '🫐'],
+  [/вишн/, '🍒'], [/финик|инжир/, '🌴'],
+  [/хлеб|батон|сухар/, '🍞'], [/круассан/, '🥐'], [/булочк/, '🥖'],
+  [/торт|эклер|чизкейк|вафл/, '🍰'], [/пончик/, '🍩'], [/зефир|мармелад|халва|^сахар/, '🍬'], [/мёд|мед(?![а-яё])|джем/, '🍯'],
+  [/майонез|горчиц|соус/, '🥫'], [/мука|гречк|греч|пшен|перлов|булгур|кускус|киноа|круп/, '🌾'], [/протеин/, '💪'],
+  [/chicken|turkey/, '🍗'], [/beef|pork|steak|lamb|ham|sausage|meat/, '🥩'], [/salmon|tuna|fish|shrimp|cod/, '🐟'], [/egg/, '🥚'],
+  [/milk|yogurt|yoghurt|cream|kefir/, '🥛'], [/cheese/, '🧀'], [/bread|toast|bagel/, '🍞'], [/rice/, '🍚'], [/pasta|noodle|spaghetti/, '🍝'],
+  [/apple/, '🍎'], [/banana/, '🍌'], [/orange/, '🍊'], [/berry|berries/, '🍓'], [/potato/, '🥔'], [/tomato/, '🍅'], [/carrot/, '🥕'],
+  [/nut|almond|peanut/, '🥜'], [/chocolate|candy|cookie|cake/, '🍫'], [/oat|cereal|granola/, '🥣'], [/juice|soda|cola/, '🥤'], [/coffee/, '☕']
+];
+const emo = n => { const t = norm(String(n)); for (const [re, e] of EMO) if (re.test(t)) return e; return '🍽️'; };
+const okImg = u => /^https:\/\/[a-z0-9.-]+\.(openfoodfacts\.(org|net)|usda\.gov)\//i.test(u || '') ? u : '';
+const thumb = (img, name, big) => `<span class="th${big ? ' lg' : ''}">${okImg(img) ? `<img src="${esc(img)}" data-e="${emo(name)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : emo(name)}</span>`;
+document.addEventListener('error', e => { const i = e.target; if (i && i.tagName === 'IMG' && i.dataset && i.dataset.e) i.replaceWith(document.createTextNode(i.dataset.e)); }, true);
+
+// ----- online databases: Open Food Facts (products + barcodes, photos) and USDA FoodData Central (English names)
+const USDA_KEY = 'DEMO_KEY'; // public demo key (small daily limit); put your own free key from fdc.nal.usda.gov here
+let web = {q: '', items: [], st: ''}, webTok = 0;
+const n1 = v => Math.round(v * 10) / 10;
+const ENT = {quot: '"', amp: '&', lt: '<', gt: '>', apos: "'", nbsp: ' '};
+function dec(t) {
+  t = String(t == null ? '' : t);
+  for (let i = 0; i < 3; i++) {
+    const u = t.replace(/&(quot|amp|lt|gt|apos|nbsp);?|&#(\d+);|&#x([0-9a-f]+);/gi, (m, n, d, h) => n ? ENT[n.toLowerCase()] : String.fromCodePoint(d ? +d : parseInt(h, 16)));
+    if (u === t) break; t = u;
+  }
+  return t.replace(/\s+/g, ' ').trim();
+}
+const okNum = (k, p, f, c) => [k, p, f, c].every(isFinite) && k >= 0 && k <= 900 && p >= 0 && f >= 0 && c >= 0;
+function offName(p) {
+  const name = dec(p.product_name_ru || p.product_name || ''), br = dec(String(Array.isArray(p.brands) ? p.brands[0] : (p.brands || '')).split(',')[0]);
+  return name && br && !name.toLowerCase().includes(br.toLowerCase()) ? name + ' · ' + br : name;
+}
+function offFood(p) {
+  const m = p.nutriments || {}, n = offName(p);
+  let k = parseFloat(m['energy-kcal_100g']);
+  if (!isFinite(k)) { const kj = parseFloat(m['energy_100g']); if (isFinite(kj)) k = kj / 4.184; }
+  const pr = parseFloat(m['proteins_100g']), fa = parseFloat(m['fat_100g']), ca = parseFloat(m['carbohydrates_100g']);
+  if (!n || !okNum(k, pr, fa, ca)) return null;
+  return {n, k: Math.round(k), p: n1(pr), f: n1(fa), c: n1(ca), w: 0, s: norm(n), web: 1, src: 'off', bc: /^\d{6,14}$/.test(String(p.code || '')) ? String(p.code) : '',
+    img: okImg(p.image_front_small_url || p.image_small_url || p.image_front_thumb_url || p.image_url || '')};
+}
+function parseOff(j) {
+  const seen = new Set(), out = [];
+  (j && (j.products || j.hits) || []).forEach(p => { const f = p && offFood(p); if (f && !seen.has(f.n)) { seen.add(f.n); out.push(f); } });
+  return out;
+}
+function usdaFood(f) {
+  const m = {};
+  (f.foodNutrients || []).forEach(x => { const id = x.nutrientId != null ? x.nutrientId : x.nutrient && x.nutrient.id, v = x.value != null ? x.value : x.amount; if (id != null && isFinite(parseFloat(v))) m[id] = parseFloat(v); });
+  const k = [m[1008], m[2047], m[2048]].find(isFinite), pr = m[1003], fa = m[1004] == null ? 0 : m[1004], ca = m[1005] == null ? 0 : m[1005];
+  let name = dec(f.description || '');
+  if (name && name === name.toUpperCase()) name = name.charAt(0) + name.slice(1).toLowerCase();
+  const br = dec(f.brandName || f.brandOwner || '');
+  const n = name && br && !name.toLowerCase().includes(br.toLowerCase()) ? name + ' · ' + br : name;
+  if (!n || !okNum(k, pr, fa, ca)) return null;
+  return {n, k: Math.round(k), p: n1(pr), f: n1(fa), c: n1(ca), w: 0, s: norm(n), web: 1, src: 'usda', bc: '', img: ''};
+}
+function parseUsda(j) {
+  const seen = new Set(), out = [];
+  (j && j.foods || []).forEach(p => { const f = p && usdaFood(p); if (f && !seen.has(f.n)) { seen.add(f.n); out.push(f); } });
+  return out;
+}
+const webCache = new Map(), sleep = ms => new Promise(r => setTimeout(r, ms));
+async function getJson(url, ms) {
+  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), ms);
+  try { const r = await fetch(url, {signal: ctl.signal}); if (!r.ok) throw new Error('http ' + r.status); return await r.json(); }
+  finally { clearTimeout(tm); }
+}
+// Open Food Facts allows ~10 searches a minute per IP, so requests go one at a time with a pause between them.
+// search-a-licious (the current search service) goes first, the legacy cgi/search.pl endpoints are only a fallback.
+let offLast = 0;
+async function offGate() { const gap = Date.now() - offLast; if (gap < 1300) await sleep(1300 - gap); offLast = Date.now(); }
+const luc = q => q.replace(/[+\-&|!(){}\[\]^"~*?:\\\/]/g, ' ').replace(/\s+/g, ' ').trim();
+async function offSearch(q) {
+  const F = 'code,product_name,product_name_ru,brands,nutriments,image_front_small_url,image_small_url,image_front_thumb_url';
+  const cgi = h => `https://${h}.openfoodfacts.org/cgi/search.pl?` + new URLSearchParams(Object.assign({search_terms: q, search_simple: 1, action: 'process', json: 1, page_size: 24, fields: F}, h === 'world' ? {lc: 'ru'} : {}));
+  const sal = withFields => 'https://search.openfoodfacts.org/search?' + new URLSearchParams(Object.assign({q: luc(q) || q, langs: 'ru', page_size: 24}, withFields ? {fields: 'code,product_name,brands,nutriments,image_small_url,image_front_small_url'} : {}));
+  const errs = [];
+  for (const u of [sal(true), sal(false), cgi('world'), cgi('ru')]) {
+    await offGate();
+    try { return parseOff(await getJson(u, 8000)); } // an answer (even an empty one) ends the search
+    catch (e) { const m = String(e && e.message || e); if (!errs.includes(m)) errs.push(m); }
+  }
+  throw new Error(errs.join('; '));
+}
+async function usdaSearch(q) {
+  return parseUsda(await getJson('https://api.nal.usda.gov/fdc/v1/foods/search?' + new URLSearchParams({api_key: USDA_KEY, query: q, pageSize: 15, dataType: 'Foundation,SR Legacy,Branded'}), 9000));
+}
+async function retry(fn, tries, my) {
+  let last;
+  for (let i = 0; i < tries; i++) {
+    try { return await fn(); } catch (e) { last = e; if (my !== webTok) throw new Error('stale'); if (i < tries - 1) await sleep(800 * (i + 1)); }
+  }
+  throw last || new Error('fail');
+}
+function mergeWeb(a, b) {
+  const have = new Set(a.map(x => x.n)), mine = new Set(FOODS.map(x => x.n));
+  return a.concat(b.filter(x => !have.has(x.n) && !mine.has(x.n))).sort((x, y) => (x.src === 'usda') - (y.src === 'usda'));
+}
+async function webSearch() {
+  const q = $('#q').value.trim(); if (!q) return;
+  const key = norm(q), my = ++webTok;
+  if (webCache.has(key)) { web = {q, items: webCache.get(key), st: 'ok', err: ''}; showFound(); return; }
+  web = {q, items: [], st: 'load', err: ''}; showFound();
+  const parts = [[() => offSearch(q), 1]];
+  if (/[a-z]/i.test(q)) parts.push([() => usdaSearch(q), 2]);
+  let okAny = false, pending = parts.length;
+  await Promise.all(parts.map(async ([fn, tries]) => {
+    let res = null, err = '';
+    try { res = await retry(fn, tries, my); } catch (e) { res = null; err = String(e && e.message || e); }
+    if (my !== webTok) return;
+    if (res) { okAny = true; web.items = mergeWeb(web.items, res.slice(0, 15)); } else if (err) web.err = err;
+    pending--; web.st = pending ? 'load' : okAny ? 'ok' : 'err';
+    if ($('#q').value.trim() === q && !$('#found').hidden) showFound();
+  }));
+  if (my === webTok && web.st === 'ok') webCache.set(key, web.items);
+}
+const foodRow = (x, attr) => `<button class="fd" ${attr}="${attr === 'data-n' ? esc(x.n) : x.i}">${thumb(x.img, x.n)}<span class="fn">${esc(x.n)}</span><span class="sub">${x.k} ккал / 100 г</span></button>`;
+function webBlock(has) {
+  if (!has) return '';
+  const q = $('#q').value.trim();
+  if (web.q !== q) return `<button class="link fd" data-web style="justify-content:flex-start">Искать «${esc(q)}» в интернете</button>`;
+  let h = '';
+  if (web.items.length) h += '<span class="fl" style="padding-top:14px">Из интернета</span>' + web.items.map((x, i) => foodRow(Object.assign({}, x, {i}), 'data-w')).join('');
+  if (web.st === 'load') h += '<div class="sub" style="padding:14px 8px">Ищу в интернете…</div>';
+  else if (web.st === 'err' && !web.items.length) h += '<div class="sub" style="padding:14px 8px">Не удалось загрузить: сервер не ответил или временно ограничил запросы. Подождите минуту. <button class="link" data-web>Повторить</button>' + (web.err ? '<div style="font-size:12px;margin-top:6px;word-break:break-word">' + esc(web.err.slice(0, 160)) + '</div>' : '') + '</div>';
+  else if (!web.items.length) h += '<div class="sub" style="padding:14px 8px">В интернете тоже ничего. Попробуйте отсканировать штрих-код или добавьте вручную.</div>';
+  else h += '<div class="note">Источники: Open Food Facts (ODbL, фото CC BY-SA)' + (web.items.some(x => x.src === 'usda') ? ', USDA FoodData Central' : '') + '. Значения на 100 г, пользовательские данные могут быть неточными.</div>';
+  return h;
+}
 function showFound() {
   const t = norm($('#q').value).split(/\s+/).filter(Boolean);
-  let r;
-  if (!t.length) r = POP.map(n => FOODS.find(x => x.n === n)).filter(Boolean);
-  else r = FOODS.map(x => t.every(w => x.s.includes(w)) ? [x.s.startsWith(t[0]) ? 0 : x.s.includes(' ' + t[0]) ? 1 : 2, x] : null).filter(Boolean)
-    .sort((a, b) => a[0] - b[0] || FOODS.indexOf(a[1]) - FOODS.indexOf(b[1])).slice(0, 40).map(a => a[1]);
-  $('#found').innerHTML = (t.length ? '' : '<span class="fl" style="padding-top:4px">Популярное</span>') + (r.length ?
-    r.map(x => `<button class="fd" data-n="${esc(x.n)}"><span>${esc(x.n)}</span><span class="sub">${x.k} ккал / 100 г</span></button>`).join('') :
-    '<div class="sub" style="padding:14px 8px">Ничего не найдено. Добавьте продукт на вкладке «Вручную».</div>');
+  let h = '';
+  if (!t.length) {
+    const rec = (st.saved || []).slice(0, 5).map(x => FOODS.find(y => y.n === x.n)).filter(Boolean);
+    const pop = POP.map(n => FOODS.find(x => x.n === n)).filter(x => x && !rec.includes(x));
+    if (rec.length) h += '<span class="fl" style="padding-top:4px">Недавние</span>' + rec.map(x => foodRow(x, 'data-n')).join('');
+    h += '<span class="fl" style="padding-top:4px">Популярное</span>' + pop.map(x => foodRow(x, 'data-n')).join('');
+  } else {
+    const r = FOODS.map(x => t.every(w => x.s.includes(w)) ? [x.s.startsWith(t[0]) ? 0 : x.s.includes(' ' + t[0]) ? 1 : 2, x] : null).filter(Boolean)
+      .sort((a, b) => a[0] - b[0] || FOODS.indexOf(a[1]) - FOODS.indexOf(b[1])).slice(0, 40).map(a => a[1]);
+    const wb = webBlock(true), btn = web.q !== $('#q').value.trim();
+    h += (btn ? wb : '') + (r.length ? r.map(x => foodRow(x, 'data-n')).join('') : '<div class="sub" style="padding:14px 8px">В вашей базе ничего не найдено.</div>') + (btn ? '' : wb);
+  }
+  $('#found').innerHTML = h;
 }
 function pickFood(x) {
   sel = x; $('#found').hidden = true; $('#q').hidden = true; $('#pick').hidden = false;
-  $('#pkName').textContent = x.n;
+  $('#pkName').textContent = x.n; $('#pkTh').innerHTML = thumb(x.img, x.n, true);
   $('#pkBase').textContent = `На 100 г: ${x.k} ккал, белки ${x.p}, жиры ${x.f}, углеводы ${x.c}`;
   $('#gr').value = x.w || 100;
   $('#gchips').innerHTML = (x.w ? [1, 2, 3].map(n => `<button data-g="${x.w * n}">${n} шт</button>`) : []).concat([50, 100, 150, 200, 300].map(g => `<button data-g="${g}">${g} г</button>`)).join('');
   calcSr(); $('#gr').focus(); $('#gr').select();
 }
+
+// ----- barcode scanner: built-in BarcodeDetector where it exists, ZXing (loaded on demand) everywhere else
+let scanRun = 0, scanStream = null, zxPromise = null, scanLook = 0;
+const scanMsg = (t, again) => { $('#scanMsg').textContent = t; $('#scanAgain').hidden = !again; };
+function stopScan() {
+  scanRun++;
+  if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+  const v = $('#cam'); if (v) { try { v.pause(); } catch (e) {} v.srcObject = null; }
+}
+function loadZX() {
+  if (window.ZXing) return Promise.resolve(window.ZXing);
+  if (zxPromise) return zxPromise;
+  const urls = ['https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js', 'https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js'];
+  zxPromise = (async () => {
+    for (const u of urls) {
+      try { await new Promise((ok, no) => { const el = document.createElement('script'); el.src = u; el.onload = ok; el.onerror = no; document.head.appendChild(el); }); if (window.ZXing) return window.ZXing; } catch (e) {}
+    }
+    zxPromise = null; return null;
+  })();
+  return zxPromise;
+}
+async function makeZx() {
+  const zx = await loadZX(); if (!zx) return null;
+  const mr = new zx.MultiFormatReader(), h = new Map();
+  h.set(zx.DecodeHintType.POSSIBLE_FORMATS, [zx.BarcodeFormat.EAN_13, zx.BarcodeFormat.EAN_8, zx.BarcodeFormat.UPC_A, zx.BarcodeFormat.UPC_E, zx.BarcodeFormat.CODE_128]);
+  h.set(zx.DecodeHintType.TRY_HARDER, true); mr.setHints(h);
+  return {zx, mr};
+}
+async function startScan() {
+  stopScan(); const my = scanRun;
+  scanMsg('Запускаю камеру…');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { scanMsg('Камера здесь недоступна (нужен https). Введите код цифрами.', false); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: {ideal: 'environment'}, width: {ideal: 1280}, height: {ideal: 720}}, audio: false}); }
+  catch (e) { scanMsg('Нет доступа к камере. Разрешите её в настройках браузера или введите код цифрами.', true); return; }
+  if (my !== scanRun) { stream.getTracks().forEach(t => t.stop()); return; }
+  scanStream = stream;
+  const v = $('#cam'); v.srcObject = stream; v.muted = true; v.setAttribute('playsinline', '');
+  try { await v.play(); } catch (e) {}
+  let det = null, z = null, fails = 0;
+  if ('BarcodeDetector' in window) { try { det = new BarcodeDetector({formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128']}); } catch (e) { det = null; } }
+  if (!det) { scanMsg('Загружаю сканер…'); z = await makeZx(); if (my !== scanRun) return; if (!z) { scanMsg('Не удалось загрузить сканер. Введите код цифрами.', true); return; } }
+  scanMsg('Наведите камеру на штрих-код');
+  const cv = document.createElement('canvas'), cx = cv.getContext('2d', {willReadFrequently: true});
+  while (my === scanRun) {
+    await sleep(det ? 120 : 200);
+    if (my !== scanRun) return;
+    if (!v.videoWidth) continue;
+    let code = '';
+    try {
+      if (det) { const r = await det.detect(v); if (r.length) code = String(r[0].rawValue || ''); }
+      else {
+        const w = Math.min(v.videoWidth, 960), h = Math.round(v.videoHeight * w / v.videoWidth);
+        cv.width = w; cv.height = h; cx.drawImage(v, 0, 0, w, h);
+        code = z.mr.decode(new z.zx.BinaryBitmap(new z.zx.HybridBinarizer(new z.zx.HTMLCanvasElementLuminanceSource(cv)))).getText();
+      }
+    } catch (e) {
+      if (det && ++fails >= 3) { det = null; z = await makeZx(); if (my !== scanRun) return; if (!z) { scanMsg('Не удалось загрузить сканер. Введите код цифрами.', true); return; } }
+    }
+    if (/^\d{8,14}$/.test(code)) { onCode(code); return; }
+  }
+}
+function onCode(code) { try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} stopScan(); lookupBarcode(code); }
+async function barcodeQuery(code) {
+  const F = 'code,product_name,product_name_ru,brands,nutriments,image_front_small_url,image_small_url,image_front_thumb_url';
+  const urls = [`https://world.openfoodfacts.org/api/v3/product/${code}.json?fields=${F}`, `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=${F}`, `https://ru.openfoodfacts.org/api/v2/product/${code}.json?fields=${F}`];
+  let answered = false;
+  try {
+    return await Promise.any(urls.map(async u => {
+      const j = await getJson(u, 9000); answered = true;
+      if (!j || !j.product || !(j.product.product_name || j.product.product_name_ru || j.product.nutriments)) throw new Error('nf');
+      return j.product;
+    }));
+  } catch (e) { if (answered) return null; throw e; }
+}
+async function usdaBarcode(code) {
+  const j = await getJson('https://api.nal.usda.gov/fdc/v1/foods/search?' + new URLSearchParams({api_key: USDA_KEY, query: code, pageSize: 5, dataType: 'Branded'}), 9000);
+  const z = s => String(s || '').replace(/^0+/, ''), f = (j.foods || []).find(x => z(x.gtinUpc) === z(code)), r = f && usdaFood(f);
+  if (r) r.bc = code; return r;
+}
+function gotFood(f) { setMode('sr'); pickFood(f); }
+async function lookupBarcode(code) {
+  const my = ++scanLook;
+  scanMsg('Код ' + code + '. Ищу продукт…');
+  const known = FOODS.find(x => x.bc === code); if (known) { gotFood(known); return; }
+  let off; // undefined: сеть не ответила, null: в базе нет
+  for (let i = 0; i < 3 && off === undefined; i++) { try { off = await barcodeQuery(code); } catch (e) { if (i < 2) await sleep(700 * (i + 1)); } if (my !== scanLook) return; }
+  if (off) { const f = offFood(off); if (f) { f.bc = code; gotFood(f); return; } }
+  let u = null; try { u = await usdaBarcode(code); } catch (e) {}
+  if (my !== scanLook) return;
+  if (u) { gotFood(u); return; }
+  if (off) {
+    setMode('man'); $('#nm').value = offName(off); $('#err').textContent = 'В базе нет КБЖУ для этого продукта. Введите значения с упаковки (на 100 г).';
+    return;
+  }
+  scanMsg(off === undefined ? 'Не удалось связаться с базой. Проверьте интернет и попробуйте ещё раз.' : 'Продукта с кодом ' + code + ' нет в базах. Добавьте его на вкладке «Вручную».', true);
+}
+$('#scanAgain').onclick = startScan;
+$('#bcGo').onclick = () => { const c = $('#bcIn').value.replace(/\D/g, ''); if (c.length < 8 || c.length > 14) { scanMsg('Введите код целиком: от 8 до 14 цифр.', false); return; } stopScan(); lookupBarcode(c); };
+$('#bcIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('#bcGo').click(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && scanStream) { stopScan(); scanMsg('Камера остановлена.', true); } });
+
 function calcSr() {
   const g = Math.min(num($('#gr').value), 5000), m = v => Math.round(v * g / 10) / 10;
   cur = {g, kcal: Math.round(sel.k * g / 100), p: m(sel.p), f: m(sel.f), c: m(sel.c)};
@@ -635,8 +928,22 @@ $('#fab').onclick = () => {
   drawSeg(); setMode('sr'); showFound(); open('addSheet'); $('#q').focus();
 };
 $('#q').addEventListener('input', showFound);
-$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { const b = $('#found .fd'); if (b) b.click(); } });
-$('#found').onclick = e => { const b = e.target.closest('[data-n]'); if (b) pickFood(FOODS.find(x => x.n === b.dataset.n)); };
+let webTimer = 0;
+$('#q').addEventListener('input', () => {
+  clearTimeout(webTimer);
+  const q = $('#q').value.trim();
+  if (q.length < 3) return;
+  // Open Food Facts forbids search-as-you-type, so only search by itself when the local base has nothing
+  const t = norm(q).split(/\s+/).filter(Boolean);
+  if (FOODS.some(x => t.every(w => x.s.includes(w)))) return;
+  webTimer = setTimeout(() => { if (!$('#ov').hidden && !$('#found').hidden && mode === 'sr' && $('#q').value.trim() === q) webSearch(); }, 1600);
+});
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { const b = $('#found [data-n]') || $('#found [data-web]'); if (b) b.click(); } });
+$('#found').onclick = e => {
+  if (e.target.closest('[data-web]')) { webSearch(); return; }
+  const w = e.target.closest('[data-w]'); if (w) { pickFood(web.items[+w.dataset.w]); return; }
+  const b = e.target.closest('[data-n]'); if (b) pickFood(FOODS.find(x => x.n === b.dataset.n));
+};
 $('#gchips').onclick = e => { const b = e.target.closest('[data-g]'); if (b) { $('#gr').value = b.dataset.g; calcSr(); } };
 $('#gr').addEventListener('input', calcSr);
 $('#pkBack').onclick = backToSearch;
@@ -644,7 +951,8 @@ $('#seg').addEventListener('click', () => { if (sel) calcSr(); });
 $('#addSr').onclick = () => {
   if (!sel || !cur.g) return;
   const k = key(day);
-  (st.days[k] = st.days[k] || []).push({id: Date.now() + '' + Math.random(), meal, name: sel.n + ', ' + cur.g + ' г', kcal: cur.kcal, p: cur.p, f: cur.f, c: cur.c});
+  (st.days[k] = st.days[k] || []).push({id: Date.now() + '' + Math.random(), meal, name: sel.n + ', ' + cur.g + ' г', kcal: cur.kcal, p: cur.p, f: cur.f, c: cur.c, img: sel.img || ''});
+  if (sel.web || sel.my) saveFood(sel);
   save(); close(); render();
 };
 $('#addBtn').onclick = () => {
